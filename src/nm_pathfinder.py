@@ -26,25 +26,7 @@ def find_midpoint (box1, point1, box2, point2, path):
     
     return (x, y)
 
-def find_path (source_point, destination_point, mesh):
-
-    """
-    Searches for a path from source_point to destination_point through the mesh
-
-    Args:
-        source_point: starting point of the pathfinder
-        destination_point: the ultimate goal the pathfinder must reach
-        mesh: pathway constraints the path adheres to
-
-    Returns:
-
-        A path (list of points) from source_point to destination_point if exists
-        A list of boxes explored by the algorithm
-    """
-
-    path = []
-    boxes = {}
-    
+def breadth_first_search (source_point, destination_point, mesh, path, boxes):
     source_box = find_containing_box(source_point, mesh['boxes'])
     destination_box = find_containing_box(destination_point, mesh['boxes'])
     
@@ -75,6 +57,28 @@ def find_path (source_point, destination_point, mesh):
                 x1, x2, y1, y2 = current_box
                 path.append(((x1 + x2) // 2, (y1 + y2) // 2))
                 break
+    
+
+def find_path (source_point, destination_point, mesh):
+
+    """
+    Searches for a path from source_point to destination_point through the mesh
+
+    Args:
+        source_point: starting point of the pathfinder
+        destination_point: the ultimate goal the pathfinder must reach
+        mesh: pathway constraints the path adheres to
+
+    Returns:
+
+        A path (list of points) from source_point to destination_point if exists
+        A list of boxes explored by the algorithm
+    """
+
+    path = []
+    boxes = {}
+    
+    breadth_first_search (source_point, destination_point, mesh, path, boxes)
     
     # test_mesh (mesh)
     
