@@ -34,6 +34,7 @@ def breadth_first_search (source_point, destination_point, mesh, path, boxes):
     root_queue.append(source_box)
     
     distance = 0
+    boxes = {}
     boxes[source_box] = distance
     # breadth first search
     while root_queue:
@@ -48,16 +49,27 @@ def breadth_first_search (source_point, destination_point, mesh, path, boxes):
                 root_queue.append(neighbor)
     
     # find path from source to destination
-    current_box = destination_box
+    # current_box = destination_box
+    # path.append(destination_point)
+    # while current_box != source_box:
+    #     for neighbor in mesh['adj'][current_box]: # dictionary box -> adj boxes
+    #         if boxes[neighbor] == boxes[current_box] - 1: # list boxes -> distance value
+    #             current_box = neighbor
+    #             x1, x2, y1, y2 = current_box
+    #             path.append(((x1 + x2) // 2, (y1 + y2) // 2))
+    #             break
+    current_box = destination_box 
     path.append(destination_point)
     while current_box != source_box:
+        min_neighbor = boxes[current_box]
+        x1, x2, y1, y2 = current_box
         for neighbor in mesh['adj'][current_box]:
-            if boxes[neighbor] == boxes[current_box] - 1:
-                current_box = neighbor
-                x1, x2, y1, y2 = current_box
-                path.append(((x1 + x2) // 2, (y1 + y2) // 2))
-                break
-    
+            if neighbor in boxes and boxes[neighbor] < min_neighbor:
+                min_neighbor = boxes[neighbor]
+                x1, x2, y1, y2 = neighbor
+        current_box = (x1, x2, y1, y2)
+        path.append(((x1 + x2) // 2, (y1 + y2) // 2))
+                
 
 def find_path (source_point, destination_point, mesh):
 
@@ -75,23 +87,12 @@ def find_path (source_point, destination_point, mesh):
         A list of boxes explored by the algorithm
     """
 
-    path = []
-    boxes = {}
-    
-    breadth_first_search (source_point, destination_point, mesh, path, boxes)
+    path = [] # list of points
+    boxes = {} # dictionary of explored boxes -> distance value
     
     # test_mesh (mesh)
     
-    # # grab source and destination points and add to path
-    # path.append(source_point)
-    # path.append(destination_point)
+    breadth_first_search (source_point, destination_point, mesh, path, boxes)
     
-    # # add them to boxes too
-    # if (source_box):
-    #     boxes[source_box] = 0
-    # if (destination_box):
-    #     boxes[destination_box] = 0
-    
-
     return path, boxes.keys()
 
