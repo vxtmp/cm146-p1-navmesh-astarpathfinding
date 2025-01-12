@@ -1,3 +1,7 @@
+from heapq import heappop, heappush
+# =============================================================================
+# UNIT TEST ===================================================================
+# =============================================================================
 def test_mesh (mesh):
     for box in mesh['boxes']:
         print (f"Box: {box}")
@@ -5,6 +9,9 @@ def test_mesh (mesh):
     for box, neighbors in mesh['adj'].items():
         print (f"Box {box} has neighbors: {neighbors}")
         
+# =============================================================================
+# HELPER FUNCTIONS ============================================================
+# =============================================================================
 def point_in_box (point, box):
     x1, x2, y1, y2 = box
     x, y = point
@@ -22,14 +29,6 @@ def distance (point1, point2):
     x2, y2 = point2
     return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
-# WIP
-# def find_midpoint (box1, point1, box2, point2, path):
-#     x1, x2, y1, y2 = box1
-#     x3, x4, y3, y4 = box2
-#     # gets the midpoint along the tangent of the two boxes such that the path is shortest
-    
-#     return (x, y)
-
 def find_closest_point (point1, box2):
     x1, x2, y1, y2 = box2
     x, y = point1
@@ -42,6 +41,10 @@ def find_closest_point (point1, box2):
 def append_path (point1, box2, path):
     x, y = find_closest_point(point1, box2)
     path.append((x, y))
+
+# =============================================================================
+# SEARCH ALGORITHMS (BSF) =====================================================
+# =============================================================================
 
 def breadth_first_search (source_point, destination_point, mesh, path, boxes):
     source_box = find_containing_box(source_point, mesh['boxes'])
@@ -57,6 +60,7 @@ def breadth_first_search (source_point, destination_point, mesh, path, boxes):
     distance = 0
     boxes = {}
     boxes[source_box] = distance
+    
     # breadth first search
     while root_queue:
         current_box = root_queue.pop(0)
@@ -87,8 +91,50 @@ def breadth_first_search (source_point, destination_point, mesh, path, boxes):
         append_path(path[-1], current_box, path)
         # path.append(((x1 + x2) // 2, (y1 + y2) // 2))
     path.append(source_point)
-                
+    
+# =============================================================================
+# SEARCH ALGORITHMS (DIJKSTRA) ================================================
+# =============================================================================
 
+def dijkstra (source_point, destination_point, mesh, path, boxes):
+    source_box = find_containing_box(source_point, mesh['boxes'])
+    destination_box = find_containing_box(destination_point, mesh['boxes'])
+    if (source_box is None) or (destination_box is None):
+        print ("Source or destination point not in any box")
+        print ("No path found")
+        return
+    path.append (source_point)
+    
+    cellPaths = {source_box: [source_point]}          # maps cells to previous points on path
+    cellPathCosts = {source_box: 0}       # maps cells to their pathcosts (found so far)
+    queue = []
+    heappush(queue, (0, source_box))  # maintain a priority queue of cells
+    
+    while queue:
+        priority, current_box = heappop(queue)
+        if current_box == destination_box:
+            path.extend(cellPaths[current_box])
+            print ("Destination reached")
+            path.append(destination_point)
+            return None
+        
+        # investigate children
+        for neighbor in mesh['adj'][current_box]:
+            # calculate cost along this path to child
+            prev_point = cellPaths[current_box][-1] if cellPaths[current_box] else source_point
+            middle_point = find_closest_point(prev_point, neighbor)
+            cost_to_neighbor = priority + distance(prev_point, middle_point)
+            
+            # if unvisited, or if more optimal path for neighbor found (lower cost)
+            if neighbor not in cellPathCosts or cost_to_neighbor < cellPathCosts[neighbor]:
+                cellPathCosts[neighbor] = cost_to_neighbor            # update the cost
+                # cellPaths[neighbor] = cellPaths[current_box] + [current_box]
+                # add point to cellPaths
+                cellPaths[neighbor] = cellPaths[current_box] + [middle_point]
+                heappush(queue, (cost_to_neighbor, neighbor))
+    return False
+                
+# MAIN FUNCTION ==============================================================
 def find_path (source_point, destination_point, mesh):
 
     """
@@ -110,7 +156,8 @@ def find_path (source_point, destination_point, mesh):
     
     # test_mesh (mesh)
     
-    breadth_first_search (source_point, destination_point, mesh, path, boxes)
+    # breadth_first_search (source_point, destination_point, mesh, path, boxes)
+    dijkstra (source_point, destination_point, mesh, path, boxes)
     
     return path, boxes.keys()
 
