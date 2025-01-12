@@ -39,6 +39,10 @@ def find_closest_point (point1, box2):
     # finds the closest point on the box to the point
     return (x, y)
 
+def append_path (point1, box2, path):
+    x, y = find_closest_point(point1, box2)
+    path.append((x, y))
+
 def breadth_first_search (source_point, destination_point, mesh, path, boxes):
     source_box = find_containing_box(source_point, mesh['boxes'])
     destination_box = find_containing_box(destination_point, mesh['boxes'])
@@ -79,7 +83,9 @@ def breadth_first_search (source_point, destination_point, mesh, path, boxes):
             print ("No path found")
             return
         current_box = (x1, x2, y1, y2) # update current box to neighbor box.
-        path.append(((x1 + x2) // 2, (y1 + y2) // 2))
+        # append path using last point added to path
+        append_path(path[-1], current_box, path)
+        # path.append(((x1 + x2) // 2, (y1 + y2) // 2))
     path.append(source_point)
                 
 
