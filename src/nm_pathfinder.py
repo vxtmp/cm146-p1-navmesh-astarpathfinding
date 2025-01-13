@@ -134,6 +134,8 @@ def dijkstra (source_point, destination_point, mesh, path, boxes):
                 cellPaths[neighbor] = cellPaths[current_box] + [middle_point]
                 # push neighbor to priority queue
                 heappush(queue, (cost_to_neighbor, neighbor))
+                
+    print ("No path found")
     return False
 
 # =============================================================================
@@ -184,6 +186,8 @@ def aStar (source_point, destination_point, mesh, path, boxes):
                 cellPaths[neighbor] = cellPaths[current_box] + [middle_point]
                 # push neighbor to priority queue
                 heappush(queue, (estimated_cost, neighbor))
+                
+    print ("No path found")
     return False
 
 
@@ -220,26 +224,19 @@ def bidirectional (source_point, destination_point, mesh, path, boxes):
         currentPaths = {}
         currentCosts = {}
         otherPaths = {}
-        otherCosts = {}
-        otherSearchDirection = ''
-        otherBox = None
         
         if direction == 'forward':
             currentPaths = forwardPaths
             currentCosts = forwardCosts
             otherPaths = backwardPaths
-            otherCosts = backwardCosts
-            otherSearchDirection = 'backward'
-            otherBox = destination_box
             currentSource = source_point
+            currentDestination = destination_point
         else: 
             currentPaths = backwardPaths
             currentCosts = backwardCosts
             otherPaths = forwardPaths
-            otherCosts = forwardCosts
-            otherSearchDirection = 'forward'
-            otherBox = source_box
             currentSource = destination_point
+            currentDestination = source_point
 
         # if unvisited, add it to the visited boxes for the parent function to draw visited boxes
         if (current_box not in boxes or boxes[current_box] > priority):
@@ -252,14 +249,7 @@ def bidirectional (source_point, destination_point, mesh, path, boxes):
             path.extend(reversePath(otherPaths[current_box]))
             print ("Destination reached")
             return None
-        
-        
-        # if current_box == destination_box:
-        #     path.extend(forwardPaths[current_box])
-        #     print ("Destination reached")
-        #     path.append(destination_point)
-        #     return None
-        
+
         # investigate children
         for neighbor in mesh['adj'][current_box]:
             # calculate cost along this path to child
@@ -268,7 +258,7 @@ def bidirectional (source_point, destination_point, mesh, path, boxes):
             
             cost_to_neighbor = currentCosts[current_box] + distance(prev_point, middle_point)
             
-            estimated_cost = cost_to_neighbor + heuristic(middle_point, destination_point)
+            estimated_cost = cost_to_neighbor + heuristic(middle_point, currentDestination)
             
             # if unvisited, or if more optimal path for neighbor found (lower cost)
             if neighbor not in currentCosts or cost_to_neighbor < currentCosts[neighbor]:
@@ -277,6 +267,7 @@ def bidirectional (source_point, destination_point, mesh, path, boxes):
                 currentPaths[neighbor] = currentPaths[current_box] + [middle_point]
                 # push neighbor to priority queue
                 heappush(queue, (estimated_cost, neighbor, direction))
+    print ("No path found")
     return False
                 
 # MAIN FUNCTION ==============================================================
