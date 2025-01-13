@@ -208,7 +208,7 @@ def bidirectional (source_point, destination_point, mesh, path, boxes):
         print ("Source or destination point not in any box")
         print ("No path found")
         return
-    path.append (source_point)
+    # path.append (source_point)
     
     forwardPaths = {source_box: [source_point]}          # maps cells to previous points on path
     forwardCosts = {source_box: 0}        # maps cells to their pathcosts (found so far)
