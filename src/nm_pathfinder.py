@@ -112,6 +112,8 @@ def dijkstra (source_point, destination_point, mesh, path, boxes):
     
     while queue:
         priority, current_box = heappop(queue)
+        if (current_box not in boxes or boxes[current_box] > priority):
+            boxes[current_box] = priority
         if current_box == destination_box:
             path.extend(cellPaths[current_box])
             print ("Destination reached")
@@ -158,6 +160,8 @@ def aStar (source_point, destination_point, mesh, path, boxes):
     
     while queue:
         priority, current_box = heappop(queue)
+        if (current_box not in boxes or boxes[current_box] > priority):
+            boxes[current_box] = priority
         if current_box == destination_box:
             path.extend(cellPaths[current_box])
             print ("Destination reached")
@@ -180,6 +184,99 @@ def aStar (source_point, destination_point, mesh, path, boxes):
                 cellPaths[neighbor] = cellPaths[current_box] + [middle_point]
                 # push neighbor to priority queue
                 heappush(queue, (estimated_cost, neighbor))
+    return False
+
+
+# =============================================================================
+# SEARCH ALGORITHMS (BIDIRECTIONAL) ===========================================
+# =============================================================================
+
+def reversePath (path):
+    reversed_path = []
+    for i in range(len(path) - 1, -1, -1):
+        reversed_path.append(path[i])
+    return reversed_path
+
+def bidirectional (source_point, destination_point, mesh, path, boxes):
+    source_box = find_containing_box(source_point, mesh['boxes'])
+    destination_box = find_containing_box(destination_point, mesh['boxes'])
+    if (source_box is None) or (destination_box is None):
+        print ("Source or destination point not in any box")
+        print ("No path found")
+        return
+    path.append (source_point)
+    
+    forwardPaths = {source_box: [source_point]}          # maps cells to previous points on path
+    forwardCosts = {source_box: 0}        # maps cells to their pathcosts (found so far)
+    backwardPaths = {destination_box: [destination_point]}          # maps cells to previous points on path
+    backwardCosts = {destination_box: 0}        # maps cells to their pathcosts (found so far)
+    queue = []
+    heappush(queue, (0, source_box, 'forward'))  # maintain a priority queue of cells
+    heappush(queue, (0, destination_box, 'backward'))  # maintain a priority queue of cells
+    
+    while queue:
+        priority, current_box, direction = heappop(queue)
+
+        currentPaths = {}
+        currentCosts = {}
+        otherPaths = {}
+        otherCosts = {}
+        otherSearchDirection = ''
+        otherBox = None
+        
+        if direction == 'forward':
+            currentPaths = forwardPaths
+            currentCosts = forwardCosts
+            otherPaths = backwardPaths
+            otherCosts = backwardCosts
+            otherSearchDirection = 'backward'
+            otherBox = destination_box
+            currentSource = source_point
+        else: 
+            currentPaths = backwardPaths
+            currentCosts = backwardCosts
+            otherPaths = forwardPaths
+            otherCosts = forwardCosts
+            otherSearchDirection = 'forward'
+            otherBox = source_box
+            currentSource = destination_point
+
+        # if unvisited, add it to the visited boxes for the parent function to draw visited boxes
+        if (current_box not in boxes or boxes[current_box] > priority):
+            boxes[current_box] = priority
+            
+        # check if both paths have visited curr box
+        if current_box in otherPaths: 
+            # found a path
+            path.extend(currentPaths[current_box])
+            path.extend(reversePath(otherPaths[current_box]))
+            print ("Destination reached")
+            return None
+        
+        
+        # if current_box == destination_box:
+        #     path.extend(forwardPaths[current_box])
+        #     print ("Destination reached")
+        #     path.append(destination_point)
+        #     return None
+        
+        # investigate children
+        for neighbor in mesh['adj'][current_box]:
+            # calculate cost along this path to child
+            prev_point = currentPaths[current_box][-1] if currentPaths[current_box] else currentSource
+            middle_point = find_closest_point(prev_point, neighbor)
+            
+            cost_to_neighbor = currentCosts[current_box] + distance(prev_point, middle_point)
+            
+            estimated_cost = cost_to_neighbor + heuristic(middle_point, destination_point)
+            
+            # if unvisited, or if more optimal path for neighbor found (lower cost)
+            if neighbor not in currentCosts or cost_to_neighbor < currentCosts[neighbor]:
+                currentCosts[neighbor] = cost_to_neighbor          # update the cost
+                # add point to cellPaths
+                currentPaths[neighbor] = currentPaths[current_box] + [middle_point]
+                # push neighbor to priority queue
+                heappush(queue, (estimated_cost, neighbor, direction))
     return False
                 
 # MAIN FUNCTION ==============================================================
@@ -206,7 +303,8 @@ def find_path (source_point, destination_point, mesh):
     
     # breadth_first_search (source_point, destination_point, mesh, path, boxes)
     # dijkstra (source_point, destination_point, mesh, path, boxes)
-    aStar (source_point, destination_point, mesh, path, boxes)
+    # aStar (source_point, destination_point, mesh, path, boxes)
+    bidirectional (source_point, destination_point, mesh, path, boxes)
     
     return path, boxes.keys()
 
